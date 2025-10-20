@@ -3,11 +3,13 @@
 import { supabase } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function EditCommentsPage() {
   const params = useParams();
   const commentId = params?.id; // ✅ safer access
+  const router = useRouter();
 
   const [commentText, setCommentText] = useState("");
   const [commentTexts, setCommentTexts] = useState("");
@@ -60,8 +62,25 @@ export default function EditCommentsPage() {
       setErrorMsg(null);
       console.log("Comment updated successfully");
     }
-  }
 
+   
+  }
+ async function handleDelete() {
+      const { error } = await supabase
+        .from("comments")
+        .delete()
+        .eq("id", commentId);
+      if (error) {
+        setErrorMsg(error.message);
+        setSuccessMsg(null);
+        console.error("Error deleting comment:", error);
+      } else {
+        setSuccessMsg("Comment deleted successfully!");
+        setErrorMsg(null);
+        console.log("Comment deleted successfully");
+        router.push("/posts"); // Redirect after deletion
+      }
+    }
   return (
     <div style={{ backgroundColor: "lightblue", color: "black", padding: "20px" }}>
       <h1>Edit Comment</h1>
@@ -82,9 +101,13 @@ export default function EditCommentsPage() {
           />
           <br />
           <button type="submit">Update Comment</button>
+        
         </form>
       )}
 
+      <button onClick={handleDelete} style={{ marginTop: "10px", backgroundColor: "red", color: "white" }}>
+        Delete Comment
+      </button>
       <br />
       <Link href="/posts">Back to Posts</Link>
     </div>
