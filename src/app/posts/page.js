@@ -29,6 +29,7 @@ export default function PostsPage() {
   function handleChange(event) {
     setNewPostContent(event.target.value);
   }
+  
 
   return (
     <div style={{backgroundColor: 'lightblue', color: 'black', padding: '20px'}}>

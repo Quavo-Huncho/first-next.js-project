@@ -2,10 +2,12 @@
 import { supabase } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import React from "react";
 
 export default function CoursePage({params}) {
   const [courses, setCourses] = useState([]);
   const [errorMsg, setErrorMsg] = useState(null);
+
   useEffect(() => {
     async function fetchCourses() {
       const { data, error } = await supabase.from("courses").select("*").eq('user_id', params.id);
@@ -23,6 +25,7 @@ export default function CoursePage({params}) {
 
   return (
     <div style={{backgroundColor: 'lightblue', color: 'black', paddingBottom: '307px', paddingLeft: '20px', paddingTop: '20px'}}>
+
       <h1>This is the courses</h1>
       {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
       <ul>
