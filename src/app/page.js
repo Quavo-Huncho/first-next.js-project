@@ -8,7 +8,6 @@ export default function Home() {
   return (
     <div style={{marginBottom: '433px', color: 'black', padding: '20px'}}>
       <p>This is the home page</p>
-      <SignupButton />
       
     </div>
   );
