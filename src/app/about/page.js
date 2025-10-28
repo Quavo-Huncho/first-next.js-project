@@ -36,7 +36,7 @@ export default function AboutPage() {
       }else{
         setSuccessMsg("User deleted successfully");
         setErrorMsg(null);
-        router.push("/about");
+        setUsers((prev) => prev.filter((c) => c.id !== userId));
 
         setTimeout(() => {
           setSuccessMsg(null);
@@ -45,14 +45,14 @@ export default function AboutPage() {
     }
 
     async function addUser() {
-      const { error } = await supabase.from("users").insert([{name, email}]);
+      const { data, error } = await supabase.from("users").insert([{name, email}]).select();
       if(error) {
         setErrorMsg(error.message);
         setSuccessMsg(null);
       }else{
         setSuccessMsg("User added successfully");
         setErrorMsg(null);
-        router.push("/about");
+        setUsers((prev) => [...prev, ...data]);
 
         setTimeout(() => {
           setSuccessMsg(null);

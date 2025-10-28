@@ -4,28 +4,42 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import React from "react";
 
-export default function CoursePage({params}) {
+export default function CoursePage({ params }) {
+  // ✅ Unwrap the promise first
+  const { id } = React.use(params);
+
   const [courses, setCourses] = useState([]);
   const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
     async function fetchCourses() {
-      const { data, error } = await supabase.from("courses").select("*").eq('user_id', params.id);
+      const { data, error } = await supabase
+        .from("courses")
+        .select("*")
+        .eq("user_id", id); // ✅ now you can safely use id
+
       if (error) {
         setErrorMsg(error.message);
         console.error("Error fetching courses:", error);
-      }
-      else {
+      } else {
         setCourses(data);
         console.log("Courses fetched successfully:", data);
       }
     }
+
     fetchCourses();
-  }, []);
+  }, [id]); // ✅ add id as dependency in case it changes
 
   return (
-    <div style={{backgroundColor: 'lightblue', color: 'black', paddingBottom: '307px', paddingLeft: '20px', paddingTop: '20px'}}>
-
+    <div
+      style={{
+        backgroundColor: "lightblue",
+        color: "black",
+        paddingBottom: "307px",
+        paddingLeft: "20px",
+        paddingTop: "20px",
+      }}
+    >
       <h1>This is the courses</h1>
       {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
       <ul>

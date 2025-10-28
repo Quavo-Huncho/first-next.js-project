@@ -48,10 +48,10 @@ export default function CoursePage() {
       .from("courses")
       .insert([
         {
-          title: title,
-          content: content,
-          user_id: "26ed8c52-8145-48b6-b636-07f224e1f66b",
-        },
+          title,
+          content,
+          user_id: null,
+        }
       ]).select();
 
     if (error) {

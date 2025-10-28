@@ -2,13 +2,14 @@
 import { supabase } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import React from "react";
 
 export default function AllPages({params}) {
-  const { id } = params;
   const [users, setUsers] = useState(null);
   const [courses, setCourses] = useState([]);
   const [posts, setPosts] = useState([]);
   const [errorMsg, setErrorMsg] = useState(null);
+  const { id } = React.use(params);
 
   useEffect(() => {
     async function fetchAllDetails() {
