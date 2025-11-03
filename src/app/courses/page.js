@@ -24,7 +24,42 @@ export default function CoursePage() {
       }
     }
     fetchCourses();
+
+    // Set up real-time subscription to 'posts' table
+    const channel = supabase
+      .channel('courses-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'courses' },
+        (payload) => {
+          console.log('Change received!', payload)
+          handleDatabaseChange(payload)
+        }
+      )
+      .subscribe()
+
+    // Cleanup subscription
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, []);
+
+  const handleDatabaseChange = (payload) => {
+    if (payload.eventType === 'INSERT') {
+      setCourses((prev) => [payload.new, ...prev])
+    } else if (payload.eventType === 'UPDATE') {
+      setCourses((prev) =>
+        prev.map((course) =>
+          course.id === payload.new.id ? payload.new : course
+        )
+      )
+    } else if (payload.eventType === 'DELETE') {
+      setCourses((prev) =>
+        prev.filter((course) => course.id !== payload.old.id)
+      )
+    }
+  };
+
 
   async function handleDelete(courseId) {
     const { error } = await supabase.from("courses").delete().eq("id", courseId);

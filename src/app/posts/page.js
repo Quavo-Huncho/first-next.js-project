@@ -35,6 +35,7 @@ export default function PostsPage() {
     fetchPosts();
     getUser();
 
+    // Set up real-time subscription to 'posts' table
     const channel = supabase
       .channel('posts-changes')
       .on(

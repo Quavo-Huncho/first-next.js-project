@@ -26,7 +26,40 @@ export default function AboutPage() {
       }
     }
     fetchUsers();
+    // Set up real-time subscription to 'users' table
+    const channel = supabase
+      .channel('users-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'users' },
+        (payload) => {
+          console.log('Change received!', payload)
+          handleDatabaseChange(payload)
+        }
+      )
+      .subscribe()
+    // Cleanup subscription
+    return () => {
+      supabase.removeChannel(channel)
+    }
+
   },[])
+
+  const handleDatabaseChange = (payload) => {
+    if (payload.eventType === 'INSERT') {
+      setUsers((prev) => [payload.new, ...prev])  
+    } else if (payload.eventType === 'UPDATE') {
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === payload.new.id ? payload.new : user
+        )
+      )
+    } else if (payload.eventType === 'DELETE') {
+      setUsers((prev) =>
+        prev.filter((user) => user.id !== payload.old.id)
+      )
+    }
+  }
 
   async function handleDelete(userId) {
       const { error } = await supabase.from("users").delete().eq("id", userId);
