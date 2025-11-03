@@ -108,7 +108,7 @@ export default function CoursePage() {
     } else {
       setSuccessMsg("Course added successfully");
       setErrorMsg(null);
-      setCourses((prev) => [...prev, ...data]);
+      //setCourses((prev) => [...prev, ...data]);
       setTitle("");
       setContent("");
      
