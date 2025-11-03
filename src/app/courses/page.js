@@ -14,16 +14,29 @@ export default function CoursePage() {
   const [editCourseId, setEditCourseId] = useState(null); // ✅ stores which course is being edited
   const router = useRouter();
 
-  useEffect(() => {
-    async function fetchCourses() {
+  async function fetchCourses() {
       const { data, error } = await supabase.from("courses").select("*");
       if (error) {
         console.error("Error fetching courses:", error);
       } else {
         setCourses(data);
       }
+  }
+
+  async function getUser(){
+      const { data, error } = await supabase.auth.getUser(); 
+      if(error){
+        console.error("Error getting user:", error);
+      }else{
+        return data.user;
+      }
     }
+
+
+  useEffect(() => {
+    
     fetchCourses();
+    getUser();
 
     // Set up real-time subscription to 'posts' table
     const channel = supabase

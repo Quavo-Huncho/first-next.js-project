@@ -14,17 +14,17 @@ export default function AboutPage() {
   const [successMsg, setSuccessMsg] = useState(null);
   const [editUserId, setEditUserId] = useState(null); // stores which user is being edited
 
-  useEffect(() => {
-    async function fetchUsers() {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*');
+  async function fetchUsers() {
+      const { data, error } = await supabase.from("users").select("*");
       if (error) {
         console.error("Error fetching users:", error);
-      }else{
+      } else {
         setUsers(data);
       }
-    }
+  }
+  
+  useEffect(() => {
+    
     fetchUsers();
     // Set up real-time subscription to 'users' table
     const channel = supabase
