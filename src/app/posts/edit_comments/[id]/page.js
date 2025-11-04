@@ -15,6 +15,7 @@ export default function EditCommentsPage() {
   const [commentTexts, setCommentTexts] = useState("");
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
+  const [postId, setPostId] = useState(null);
 
   useEffect(() => {
     // ✅ only fetch if commentId exists
@@ -23,7 +24,7 @@ export default function EditCommentsPage() {
     async function fetchComment() {
       const { data, error } = await supabase
         .from("comments")
-        .select("id, comment_text")
+        .select("id, comment_text, post_id")
         .eq("id", commentId)
         .single();
 
@@ -33,6 +34,7 @@ export default function EditCommentsPage() {
       } else {
         setCommentText(data.comment_text);
         setCommentTexts(data.comment_text);
+        setPostId(data.post_id);
         console.log("Comment fetched successfully:", data);
       }
     }
@@ -61,6 +63,7 @@ export default function EditCommentsPage() {
       setSuccessMsg("Comment updated successfully!");
       setErrorMsg(null);
       console.log("Comment updated successfully");
+      router.push(`/posts/${postId}`); // Redirect after update
     }
 
    
@@ -78,7 +81,7 @@ export default function EditCommentsPage() {
         setSuccessMsg("Comment deleted successfully!");
         setErrorMsg(null);
         console.log("Comment deleted successfully");
-        router.push("/posts"); // Redirect after deletion
+        router.push(`/posts/${postId}`); // Redirect after deletion
       }
     }
   return (
