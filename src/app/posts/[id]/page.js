@@ -13,50 +13,128 @@ export default function PostsPage() {
   const [errorMsg, setErrorMsg] = useState(null);
   const [newComments, setnewComments] = useState("");
   const [newEditComments, setnewEditComments] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
 
-  useEffect(() => {
-    if (!postId) return;
 
-    async function fetchPosts() {
-      const { data, error } = await supabase
-        .from("posts")
-        .select(`id, post_content, user_id, users(name, email)`)
-        .eq("id", postId);
-
+  async function fetchPosts() {
+      const { data, error } = await supabase.from("posts").select(`id, post_content, user_id, users(name, email)`).eq("id", postId);
       if (error) {
         setErrorMsg(error.message);
+        console.error("Error fetching posts:", error);
       } else {
         setPosts(data);
+        console.log("Posts fetched successfully:", data);
       }
     }
 
-    async function fetchComments() {
-      const { data, error } = await supabase
-        .from("comments")
-        .select(`id, comment_text, post_id, users(name, email)`)
-        .eq("post_id", postId).order("created_at", { ascending: false });
-
+  async function fetchComments() {
+      const { data, error } = await supabase.from("comments").select(`id, comment_text, user_id, users(name, email)`).eq("post_id", postId);
       if (error) {
         setErrorMsg(error.message);
+        console.error("Error fetching comments:", error);
       } else {
         setComments(data);
+        console.log("Comments fetched successfully:", data);
+      }
+    }
+    
+    async function getUser(){
+      const { data, error } = await supabase.auth.getUser();
+      if(error){
+        console.error("Error getting user:", error);
+      }else{
+        setCurrentUser(data.user);
       }
     }
 
-    fetchPosts();
-    fetchComments();
-  }, [postId]);
+
+  useEffect(() => {
+  if (!postId) return;
+
+  fetchPosts();
+  fetchComments();
+  getUser();
+
+  const channel = supabase
+    .channel(`comments-changes-${postId}`)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'comments' },
+      async (payload) => {
+        console.log('Change received!', payload);
+
+        // Only handle comments for this post
+        if (payload.new?.post_id !== postId) return;
+
+        const eventType = payload.eventType?.toUpperCase();
+
+        if (eventType === 'INSERT') {
+          const { data, error } = await supabase
+            .from('comments')
+            .select(`
+              id,
+              comment_text,
+              user_id,
+              users(name, email)
+            `)
+            .eq('id', payload.new.id)
+            .single();
+
+          if (error) {
+            console.error('Error fetching inserted comment:', error);
+            return;
+          }
+          if (!data) return;
+
+          setComments((prev) => [data, ...prev]);
+        } else if (eventType === 'UPDATE') {
+          setComments((prev) =>
+            prev.map((comment) =>
+              comment.id === payload.new.id ? payload.new : comment
+            )
+          );
+        } else if (eventType === 'DELETE') {
+          setComments((prev) =>
+            prev.filter((comment) => comment.id !== payload.old.id)
+          );
+        }
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [postId]);
 
   async function handleSubmit(event) {
-    event.preventDefault();
-    await supabase.from("comments").insert([
+  event.preventDefault();
+
+  const { data, error, status } = await supabase
+    .from("comments")
+    .insert([
       {
         post_id: postId,
         comment_text: newComments,
-        user_id: "947979fc-1baf-4f22-8880-87773136cd46",
+        user_id: currentUser.id,
       },
-    ]);
+    ])
+    .select(`
+      id,
+      comment_text,
+      user_id,
+      users(name, email)
+    `)
+    .single(); // optional, gets the inserted row back immediately
+
+  if (error) {
+    console.error("❌ Error adding comment:", error);
+  } else {
+    console.log("✅ Comment added successfully:", data);
+    setnewComments(""); // clear input
   }
+}
+
 
   async function handleEditSubmit(event) {
     event.preventDefault();

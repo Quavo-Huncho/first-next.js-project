@@ -85,7 +85,7 @@ export default function AboutPage() {
       }else{
         setSuccessMsg("User added successfully");
         setErrorMsg(null);
-        setUsers((prev) => [...prev, ...data]);
+        //setUsers((prev) => [...prev, ...data]);
 
         setTimeout(() => {
           setSuccessMsg(null);
