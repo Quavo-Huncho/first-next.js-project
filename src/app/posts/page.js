@@ -9,9 +9,13 @@ export default function PostsPage() {
   const [successMsg, setSuccessMsg] = useState(null);
   const [newPostContent, setNewPostContent] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
+  const [page, setPage] = useState(1);
+  const limit = 5;
 
    async function fetchPosts() {
-      const { data, error } = await supabase.from("posts").select(`id, post_content, user_id, users(name, email)`);
+      const start = (page - 1) * limit;
+      const end = start + limit - 1;
+      const { data, error } = await supabase.from("posts").select(`id, post_content, user_id, users(name, email)`).order("created_at", {ascending:false}).range(start, end);
       if (error) {
         setErrorMsg(error.message);
         console.error("Error fetching posts:", error);
@@ -52,7 +56,7 @@ export default function PostsPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, []);
+  }, [page]);
 
   const handleDatabaseChange = (payload) => {
     if (payload.eventType === 'INSERT') {
@@ -95,6 +99,13 @@ export default function PostsPage() {
       }
     }
 
+    function nextPage() {
+      setPage(page + 1);
+    }
+
+    function previousPage() {
+      setPage(page - 1);
+    }
   return (
     <div style={{backgroundColor: 'lightblue', color: 'black', padding: '20px'}}>
       <h1>This is the posts</h1>
@@ -116,6 +127,8 @@ export default function PostsPage() {
         <input type="text" name="post_content" placeholder="Write your post here" value={newPostContent} required onChange={handleChange}/>
         <button type="submit">Submit Post</button>
       </form>
+      <button onClick={nextPage}>next</button>
+      <button onClick={previousPage}>previous</button>
     </div>
   );
 }
