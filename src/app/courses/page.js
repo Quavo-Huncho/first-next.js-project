@@ -13,9 +13,13 @@ export default function CoursePage() {
   const [deleteSuccessMsg, setDeleteSuccessMsg] = useState(null);
   const [editCourseId, setEditCourseId] = useState(null); // ✅ stores which course is being edited
   const router = useRouter();
+  const [page, setPage] = useState(1);
+  const limit = 5;
 
   async function fetchCourses() {
-      const { data, error } = await supabase.from("courses").select("*");
+      const start = (page - 1) * limit;
+      const end = start + limit - 1;
+      const { data, error } = await supabase.from("courses").select("*").order("created_at", {ascending:false}).range(start, end);
       if (error) {
         console.error("Error fetching courses:", error);
       } else {
@@ -55,7 +59,7 @@ export default function CoursePage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, []);
+  }, [page]);
 
   const handleDatabaseChange = (payload) => {
     if (payload.eventType === 'INSERT') {
@@ -146,6 +150,14 @@ export default function CoursePage() {
   }
 }
 
+//For next page and previous page
+  function nextPage() {
+      setPage(page + 1);
+    }
+    function previousPage() {
+      setPage(page - 1);
+    }
+    
 
   return (
     <div
@@ -223,7 +235,9 @@ export default function CoursePage() {
         value={content}
         placeholder="Course Content"
       />
-      <button onClick={addCourse}>Submit</button>
+      <button onClick={addCourse}>Submit</button><br/>
+      <button onClick={nextPage}>next</button>
+      <button onClick={previousPage}>prev</button>
     </div>
   );
 }

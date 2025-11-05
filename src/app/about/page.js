@@ -13,9 +13,13 @@ export default function AboutPage() {
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
   const [editUserId, setEditUserId] = useState(null); // stores which user is being edited
+  const [page, setPage] = useState(1);
+  const limit = 5;
 
   async function fetchUsers() {
-      const { data, error } = await supabase.from("users").select("*");
+      const start = (page - 1) * limit;
+      const end = start + limit - 1;
+      const { data, error } = await supabase.from("users").select("*").order("created_at", {ascending:false}).range(start, end);
       if (error) {
         console.error("Error fetching users:", error);
       } else {
@@ -43,7 +47,7 @@ export default function AboutPage() {
       supabase.removeChannel(channel)
     }
 
-  },[])
+  },[page])
 
   const handleDatabaseChange = (payload) => {
     if (payload.eventType === 'INSERT') {
@@ -111,8 +115,14 @@ export default function AboutPage() {
           setSuccessMsg(null);
         }, 3000)
       }
+    }
 
-      
+//For next page and previous page
+    function nextPage() {
+      setPage(page + 1);
+    }
+    function prevPage() {
+      setPage(page - 1);
     }
 
   return (
@@ -153,6 +163,10 @@ export default function AboutPage() {
       <input name="name" placeholder="Name" onChange={(e) => setName(e.target.value)} value={name}/>
       <input name="email" placeholder="Email" onChange={(e) => setEmail(e.target.value)} value={email}/>
       <button onClick={addUser}>Add user</button>
+      <br />
+      <button onClick={nextPage}>next</button>
+      <span style={{ margin: '0 10px' }}>Page {page}</span>
+      <button onClick={prevPage}>prev</button>
     </div>
   ) 
 }

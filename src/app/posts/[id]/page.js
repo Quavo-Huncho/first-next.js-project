@@ -14,6 +14,8 @@ export default function PostsPage() {
   const [newComments, setnewComments] = useState("");
   const [newEditComments, setnewEditComments] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
+  const [page, setPage] = useState(1);
+  const limit = 5;
 
 
   async function fetchPosts() {
@@ -28,7 +30,9 @@ export default function PostsPage() {
     }
 
   async function fetchComments() {
-      const { data, error } = await supabase.from("comments").select(`id, comment_text, user_id, users(name, email)`).eq("post_id", postId);
+      const start = (page - 1) * limit;
+      const end = start + limit - 1;
+      const { data, error } = await supabase.from("comments").select(`id, comment_text, user_id, users(name, email)`).eq("post_id", postId).order("created_at", {ascending:false}).range(start, end);
       if (error) {
         setErrorMsg(error.message);
         console.error("Error fetching comments:", error);
@@ -49,63 +53,63 @@ export default function PostsPage() {
 
 
   useEffect(() => {
-  if (!postId) return;
+    if (!postId) return;
 
-  fetchPosts();
-  fetchComments();
-  getUser();
+    fetchPosts();
+    fetchComments();
+    getUser();
 
-  const channel = supabase
-    .channel(`comments-changes-${postId}`)
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'comments' },
-      async (payload) => {
-        console.log('Change received!', payload);
+    const channel = supabase
+      .channel(`comments-changes-${postId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'comments' },
+        async (payload) => {
+          console.log('Change received!', payload);
 
-        // Only handle comments for this post
-        if (payload.new?.post_id !== postId) return;
+          // Only handle comments for this post
+          if (payload.new?.post_id !== postId) return;
 
-        const eventType = payload.eventType?.toUpperCase();
+          const eventType = payload.eventType?.toUpperCase();
 
-        if (eventType === 'INSERT') {
-          const { data, error } = await supabase
-            .from('comments')
-            .select(`
-              id,
-              comment_text,
-              user_id,
-              users(name, email)
-            `)
-            .eq('id', payload.new.id)
-            .single();
+          if (eventType === 'INSERT') {
+            const { data, error } = await supabase
+              .from('comments')
+              .select(`
+                id,
+                comment_text,
+                user_id,
+                users(name, email)
+              `)
+              .eq('id', payload.new.id)
+              .single();
 
-          if (error) {
-            console.error('Error fetching inserted comment:', error);
-            return;
+            if (error) {
+              console.error('Error fetching inserted comment:', error);
+              return;
+            }
+            if (!data) return;
+
+            setComments((prev) => [data, ...prev]);
+          } else if (eventType === 'UPDATE') {
+            setComments((prev) =>
+              prev.map((comment) =>
+                comment.id === payload.new.id ? payload.new : comment
+              )
+            );
+          } else if (eventType === 'DELETE') {
+            setComments((prev) =>
+              prev.filter((comment) => comment.id !== payload.old.id)
+            );
           }
-          if (!data) return;
-
-          setComments((prev) => [data, ...prev]);
-        } else if (eventType === 'UPDATE') {
-          setComments((prev) =>
-            prev.map((comment) =>
-              comment.id === payload.new.id ? payload.new : comment
-            )
-          );
-        } else if (eventType === 'DELETE') {
-          setComments((prev) =>
-            prev.filter((comment) => comment.id !== payload.old.id)
-          );
         }
-      }
-    )
-    .subscribe();
+      )
+      .subscribe();
 
-  return () => {
-    supabase.removeChannel(channel);
-  };
-}, [postId]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [postId, page]);
 
   async function handleSubmit(event) {
   event.preventDefault();
@@ -143,6 +147,15 @@ export default function PostsPage() {
       .update({ comment_text: newEditComments })
       .eq("id", postId);
   }
+
+//For next page and previous page
+  function nextPage() {
+      setPage(page + 1);
+    }
+  function prevPage() {
+    setPage(page - 1);
+  }
+
 
   return (
     <div
@@ -193,9 +206,10 @@ export default function PostsPage() {
         />
         <button type="submit">Submit Comment</button>
       </form>
-
       <br />
-
+      <button onClick={nextPage}>next</button>
+      <button onClick={prevPage}>prev</button>
+      <br /><br />
       <Link href="/posts">Back to Posts</Link>
     </div>
   );
