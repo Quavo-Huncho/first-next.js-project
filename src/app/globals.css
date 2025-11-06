@@ -17,6 +17,7 @@ body {
 }
 
 body {
+  background-color: green;
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
@@ -39,4 +40,54 @@ a {
   html {
     color-scheme: dark;
   }
+}
+
+h1{
+  color: yellow;
+  text-align: center;
+}
+
+button {
+  background-color: teal;
+  color: white;
+  border-radius: 6px;
+  padding: 7px;
+  border: none;
+  cursor: pointer;
+}
+
+button.edit {
+  background-color: greenyellow;
+  color: black;
+  margin-right: 5px;
+}
+button.delete {
+  background-color: red;
+  color: white;
+}
+button.add {
+  background-color: teal;
+  color: white;
+  margin-left: -5px;
+}
+
+
+input {
+  width: 30%;
+  margin: 10px 2px 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 6px 5px;
+  outline: none;
+}
+
+h2.head {
+  color: green;
+  margin-bottom: 10px; 
+}
+
+.sub-head {
+  color: blue;
+  margin-top: 20px;
+  margin-bottom: -10px; 
 }

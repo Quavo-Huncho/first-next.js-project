@@ -168,10 +168,8 @@ export default function CoursePage() {
         padding: "20px",
       }}
     >
-      <p style={{ fontSize: "40px", color: "green" }}>These are the courses</p>
-      <p style={{ marginBottom: "10px", fontSize: "30px", color: "yellow" }}>
-        List of courses:
-      </p>
+      <h1>These are the courses</h1>
+      <h2 className="head">List of courses:</h2>
 
       <ul>
         {courses.map((course) => (
@@ -185,11 +183,11 @@ export default function CoursePage() {
                 setEditCourseId(course.id);
                 setTitle(course.title);
                 setContent(course.content);
-              }}
+              }} className="edit"
             >
               Edit Course
-            </button><br />
-            <button onClick={() => handleDelete(course.id)}>Delete Course</button><br /><br /> 
+            </button>
+            <button onClick={() => handleDelete(course.id)} className="delete">Delete Course</button><br /><br />
 
             {/* ✅ Show edit form only for the selected course */}
             {editCourseId === course.id && (
@@ -222,7 +220,7 @@ export default function CoursePage() {
       {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
       {successMsg && <p style={{ color: "green" }}>{successMsg}</p>}
 
-      <h3>Add New Course</h3>
+      <h2 className="sub-head">Add New Course</h2>
       <input
         name="title"
         onChange={(e) => setTitle(e.target.value)}
@@ -235,9 +233,10 @@ export default function CoursePage() {
         value={content}
         placeholder="Course Content"
       />
-      <button onClick={addCourse}>Submit</button><br/>
-      <button onClick={nextPage}>next</button>
+      <button onClick={addCourse} className="add">Add course</button><br/>
       <button onClick={previousPage}>prev</button>
+      <span style={{ margin: '0 5px' }}>page {page}</span>
+      <button onClick={nextPage}>next</button>
     </div>
   );
 }

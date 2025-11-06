@@ -127,7 +127,7 @@ export default function AboutPage() {
 
   return (
     <div style={{marginBottom: '10px', backgroundColor: 'lightblue', color: 'black', padding: '20px'}}>
-      <p style={{fontSize: '40px', color: 'green'}}>These are the users</p><br />
+      <h1>These are the users</h1><br />
       <ul>
         {users.map(user => (
           <li key={user.id}>
@@ -135,20 +135,20 @@ export default function AboutPage() {
             <p>EMAIL: {user.email}</p>
             <Link href={`/about/posts_id/${user.id}`}>View Posts by {user.name}</Link> <br />
             <Link href={`/about/courses_id/${user.id}`}>View Courses by {user.name}</Link><br />
-            <Link href={`/about/allPages/${user.id}`}>View all details by {user.name}</Link><br /><br />
-            <button onClick={() => handleDelete(user.id)}>Delete User</button>
+            <Link href={`/about/allPages/${user.id}`}>View all details by {user.name}</Link><br />
 
             <button onClick={() => {
               setEditUserId(user.id);
               setName(user.name);
               setEmail(user.email)
-            }}>Edit User</button>
+            }} className="edit">Edit User</button>
+            <button onClick={() => handleDelete(user.id)} className="delete">Delete User</button><br /><br />
 
             {editUserId === user.id && (
               <div>
                 <h2>Edit course</h2>
-                <input name="name" placeholder="Name" onChange={(e) => setName(e.target.value)} value={name}/>
-                <input name="email" placeholder="Email" onChange={(e) => setEmail(e.target.value)} value={email}/>
+                <input name="name" placeholder="Name" onChange={(e) => setName(e.target.value)} value={name} className="userInput"/>
+                <input name="email" className="userInput" placeholder="Email" onChange={(e) => setEmail(e.target.value)} value={email} />
                 <button onClick={() => edituserDetails(user.id)}>Submit Edit</button>
                 <button onClick={() => setEditUserId(null)}>Cancel</button>
               </div>
@@ -159,14 +159,14 @@ export default function AboutPage() {
 
       {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
       {successMsg && <p style={{ color: "green" }}>{successMsg}</p>}
-      <h2>Add a new user</h2>
+      <h2 className="sub-head">Add a new user</h2>
       <input name="name" placeholder="Name" onChange={(e) => setName(e.target.value)} value={name}/>
       <input name="email" placeholder="Email" onChange={(e) => setEmail(e.target.value)} value={email}/>
-      <button onClick={addUser}>Add user</button>
+      <button onClick={addUser} className="add">Add user</button>
       <br />
-      <button onClick={nextPage}>next</button>
-      <span style={{ margin: '0 10px' }}>Page {page}</span>
       <button onClick={prevPage}>prev</button>
+      <span style={{ margin: '0 5px' }}>page {page}</span>
+      <button onClick={nextPage}>next</button>
     </div>
   ) 
 }

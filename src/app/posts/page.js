@@ -108,7 +108,7 @@ export default function PostsPage() {
     }
   return (
     <div style={{backgroundColor: 'lightblue', color: 'black', padding: '20px'}}>
-      <h1>This is the posts</h1>
+      <h1>These are the posts</h1>
       {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
       <ul>
         {posts?.map(({ id, user_id, post_content, users }) => (
@@ -117,18 +117,20 @@ export default function PostsPage() {
             <p>{post_content}</p>
             <Link href={`/posts/${id}`}>View Post</Link><br />
             <Link href={`/about/posts_id/${user_id}`}>View All Posts by {users?.name}</Link><br />
-            <Link href={`/posts/edit_post/${id}`}>Edit Post</Link><br /><br />
-            <button type="button" onClick={()=> handleDelete(id)}>Delete post</button>
+            <Link href={`/posts/edit_post/${id}`}>Edit Post</Link><br />
+            <button type="button" onClick={()=> handleDelete(id)} className="delete">Delete post</button><br /><br />
           </li>
         ))}
       </ul>
       
+      <h2 className="sub-head">Add a new post</h2>
       <form onSubmit={handleSubmit}>
         <input type="text" name="post_content" placeholder="Write your post here" value={newPostContent} required onChange={handleChange}/>
-        <button type="submit">Submit Post</button>
+        <button type="submit" className="add">add post</button>
       </form>
+      <button onClick={previousPage}>prev</button>
+      <span style={{ margin: '0 5px' }}>page {page}</span>
       <button onClick={nextPage}>next</button>
-      <button onClick={previousPage}>previous</button>
     </div>
   );
 }

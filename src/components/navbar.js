@@ -57,6 +57,10 @@ export default function NavBar() {
           <Link href={"/courses"}>COURSES</Link>
         </button>
 
+        <button style={{ all: "unset", color: "inherit", cursor: "pointer" }}>
+          <Link href={"/posts"}>POSTS</Link>
+        </button>
+
         {user ? (
           <button type="button" onClick={handleLogOut}>
             Log Out

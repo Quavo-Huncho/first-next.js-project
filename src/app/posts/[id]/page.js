@@ -167,7 +167,7 @@ export default function PostsPage() {
         paddingTop: "20px",
       }}
     >
-      <h1>This is the posts</h1>
+      <h1>This is the post</h1>
       {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
 
       <ul>
@@ -180,21 +180,19 @@ export default function PostsPage() {
         ))}
       </ul>
 
-      <h2>Comments</h2>
+      <h2 className="head">Comments</h2>
       <ul>
         {comments?.map(({ id, comment_text, users }) => (
           <li key={id}>
             <h3>{users?.name}</h3>
             <p>{comment_text}</p>
-            <br />
             {/* ✅ Correct link: uses comment.id */}
-            <Link href={`/posts/edit_comments/${id}`}>Edit comment</Link>
+            <Link href={`/posts/edit_comments/${id}`}>Edit comment</Link><br /><br />
           </li>
         ))}
       </ul>
-
-      <br />
-
+        
+      <h2 className="sub-head">Add a new comment</h2>
       <form onSubmit={handleSubmit}>
         <input
           type="text"
@@ -204,11 +202,12 @@ export default function PostsPage() {
           required
           onChange={(e) => setnewComments(e.target.value)}
         />
-        <button type="submit">Submit Comment</button>
+        <button type="submit" className="add">add comment</button>
       </form>
       <br />
-      <button onClick={nextPage}>next</button>
       <button onClick={prevPage}>prev</button>
+      <span style={{ margin: '0 5px' }}>page {page}</span>
+      <button onClick={nextPage}>next</button>
       <br /><br />
       <Link href="/posts">Back to Posts</Link>
     </div>
