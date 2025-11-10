@@ -7,9 +7,12 @@ export default function EditPostPage({params}) {
   const [postContent, setPostContent] = useState("");
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
+  const postId = params?.id;
   useEffect(() => {
+    if (!postId) return;
+
     async function fetchPost() {
-      const { data, error } = await supabase.from("posts").select("post_content").eq('id', params.id).single();
+      const { data, error } = await supabase.from("posts").select("post_content").eq('id', postId).single();
       if (error) {
         setErrorMsg(error.message);
         console.error("Error fetching post:", error);
@@ -19,11 +22,12 @@ export default function EditPostPage({params}) {
       }
     }
     fetchPost();
-  }, []);
+  }, [postId]);
 
   async function handleSubmit(event) {
     event.preventDefault();
-    const { error } = await supabase.from("posts").update({ post_content: postContent }).eq('id', params.id);
+    if (!postId) return;
+    const { error } = await supabase.from("posts").update({ post_content: postContent }).eq('id', postId);
     if (error) {
       setErrorMsg(error.message);
       setSuccessMsg(null);

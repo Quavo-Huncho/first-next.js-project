@@ -1,6 +1,6 @@
 "use client";
 import { supabase } from "@/lib/supabase";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation"; // ✅ Added
 
@@ -17,40 +17,48 @@ export default function PostsPage() {
   const [page, setPage] = useState(1);
   const limit = 5;
 
-
-  async function fetchPosts() {
-      const { data, error } = await supabase.from("posts").select(`id, post_content, user_id, users(name, email)`).eq("id", postId);
-      if (error) {
-        setErrorMsg(error.message);
-        console.error("Error fetching posts:", error);
-      } else {
-        setPosts(data);
-        console.log("Posts fetched successfully:", data);
-      }
+  const fetchPosts = useCallback(async () => {
+    if (!postId) return;
+    const { data, error } = await supabase
+      .from("posts")
+      .select(`id, post_content, user_id, users(name, email)`)
+      .eq("id", postId);
+    if (error) {
+      setErrorMsg(error.message);
+      console.error("Error fetching posts:", error);
+    } else {
+      setPosts(data);
+      console.log("Posts fetched successfully:", data);
     }
+  }, [postId]);
 
-  async function fetchComments() {
-      const start = (page - 1) * limit;
-      const end = start + limit - 1;
-      const { data, error } = await supabase.from("comments").select(`id, comment_text, user_id, users(name, email)`).eq("post_id", postId).order("created_at", {ascending:false}).range(start, end);
-      if (error) {
-        setErrorMsg(error.message);
-        console.error("Error fetching comments:", error);
-      } else {
-        setComments(data);
-        console.log("Comments fetched successfully:", data);
-      }
+  const fetchComments = useCallback(async () => {
+    if (!postId) return;
+    const start = (page - 1) * limit;
+    const end = start + limit - 1;
+    const { data, error } = await supabase
+      .from("comments")
+      .select(`id, comment_text, user_id, users(name, email)`)
+      .eq("post_id", postId)
+      .order("created_at", { ascending: false })
+      .range(start, end);
+    if (error) {
+      setErrorMsg(error.message);
+      console.error("Error fetching comments:", error);
+    } else {
+      setComments(data);
+      console.log("Comments fetched successfully:", data);
     }
-    
-    async function getUser(){
-      const { data, error } = await supabase.auth.getUser();
-      if(error){
-        console.error("Error getting user:", error);
-      }else{
-        setCurrentUser(data.user);
-      }
-    }
+  }, [postId, page, limit]);
 
+  const getUser = useCallback(async () => {
+    const { data, error } = await supabase.auth.getUser();
+    if (error) {
+      console.error("Error getting user:", error);
+    } else {
+      setCurrentUser(data.user);
+    }
+  }, []);
 
   useEffect(() => {
     if (!postId) return;
@@ -109,10 +117,14 @@ export default function PostsPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [postId, page]);
+  }, [postId, page, fetchPosts, fetchComments, getUser]);
 
   async function handleSubmit(event) {
   event.preventDefault();
+
+  if (!postId || !currentUser) {
+    return;
+  }
 
   const { data, error, status } = await supabase
     .from("comments")
@@ -136,12 +148,14 @@ export default function PostsPage() {
   } else {
     console.log("✅ Comment added successfully:", data);
     setnewComments(""); // clear input
+    fetchComments();
   }
 }
 
 
   async function handleEditSubmit(event) {
     event.preventDefault();
+    if (!postId) return;
     await supabase
       .from("comments")
       .update({ comment_text: newEditComments })

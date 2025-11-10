@@ -16,18 +16,24 @@ export default function PostsPage() {
   const [successMsg, setSuccessMsg] = useState(null);
 
   useEffect(() => {
+    if (!courseId) return;
+
     async function fetchCourses() {
-      const { data, error } = await supabase.from("courses").select(`id, title, content, user_id, users(name, email)`).eq('id', courseId);
+      const { data, error } = await supabase
+        .from("courses")
+        .select(`id, title, content, user_id, users(name, email)`)
+        .eq('id', courseId);
       if (error) {
         setErrorMsg(error.message);
         console.error("Error fetching courses:", error);
       } else {
         setCourses(data);
-        console.log("Cousess fetched successfully:", data);
+        console.log("Courses fetched successfully:", data);
       }
     }
+
     fetchCourses();
-  }, []);
+  }, [courseId]);
 
   async function handleSubmit(event) {
     event.preventDefault();
