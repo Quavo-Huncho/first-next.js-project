@@ -79,6 +79,7 @@ export default function AboutPage() {
         setSuccessMsg(null);
       }else{
         setSuccessMsg("User deleted successfully");
+        fetchUsers();
         setErrorMsg(null);
         setUsers((prev) => prev.filter((c) => c.id !== userId));
 
@@ -87,7 +88,7 @@ export default function AboutPage() {
         }, 3000);
       }
     }
-
+/*
   async function addUser() {
     if (!name.trim() || !email.trim()) {
       setErrorMsg("Name and email are required");
@@ -107,7 +108,7 @@ export default function AboutPage() {
       }, 3000);
     }
   }
-
+*/
   async function edituserDetails(userId) {
     if (!name.trim() || !email.trim()) {
       setErrorMsg("Name and email are required");
@@ -168,7 +169,8 @@ export default function AboutPage() {
         {errorMsg && <Alert message={errorMsg} type="error" onClose={() => setErrorMsg(null)} />}
         {successMsg && <Alert message={successMsg} type="success" onClose={() => setSuccessMsg(null)} />}
 
-        {/* Add User Form */}
+
+        {/* Add User Form
         <Card className="mb-8">
           <h2 className="text-2xl font-bold mb-6 text-gray-800">Add New User</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -187,7 +189,7 @@ export default function AboutPage() {
             />
           </div>
           <Button onClick={addUser} variant="success">Add User</Button>
-        </Card>
+        </Card> */}
 
         {/* Users List */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">

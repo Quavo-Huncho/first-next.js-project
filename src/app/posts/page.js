@@ -93,6 +93,7 @@ export default function PostsPage() {
       setSuccessMsg(null);
     } else {
       setSuccessMsg("Post created successfully");
+      fetchPosts();
       setErrorMsg(null);
       setNewPostContent("");
       setTimeout(() => {
@@ -114,6 +115,7 @@ export default function PostsPage() {
         setSuccessMsg(null);
       }else{
         setSuccessMsg("Post deleted successfully");
+        fetchPosts();
         setErrorMsg(null);
         setPosts((prev) => prev.filter((c) => c.id !== postId));
 

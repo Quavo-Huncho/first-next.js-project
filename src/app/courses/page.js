@@ -88,6 +88,7 @@ export default function CoursePage() {
       setSuccessMsg(null);
     } else {
       setSuccessMsg("Course deleted successfully");
+      fetchCourses();
       setErrorMsg(null);
       setCourses((prev) => prev.filter((c) => c.id !== courseId));
       setTimeout(() => {
@@ -111,6 +112,7 @@ export default function CoursePage() {
       setSuccessMsg(null);
     } else {
       setSuccessMsg("Course added successfully");
+      fetchCourses();
       setErrorMsg(null);
       setTitle("");
       setContent("");
