@@ -17,6 +17,7 @@ export default function CoursePage() {
   const [editCourseId, setEditCourseId] = useState(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
   const limit = 5;
 
   const fetchCourses = useCallback(async () => {
@@ -37,6 +38,8 @@ export default function CoursePage() {
     const { data, error } = await supabase.auth.getUser(); 
     if(error){
       console.error("Error getting user:", error);
+    } else {
+      setCurrentUser(data.user);
     }
     return data?.user ?? null;
   }, []);
@@ -104,7 +107,7 @@ export default function CoursePage() {
     }
     const { data, error } = await supabase
       .from("courses")
-      .insert([{ title, content, user_id: null }])
+      .insert([{ title, content, user_id: currentUser ? currentUser.id : null }])
       .select();
 
     if (error) {

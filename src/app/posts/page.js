@@ -146,6 +146,7 @@ export default function PostsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
+        <img src="https://wwlidnafgkovirwgieka.supabase.co/storage/v1/object/public/posts/12V-DC-to-220V-AC-Inverter%20CCT%20Diagram%202.jpg"/>
           <h1 className="text-5xl font-bold text-white mb-4">Community Posts</h1>
           <p className="text-xl text-white/80">Share updates and connect with other learners</p>
         </motion.div>
