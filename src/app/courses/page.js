@@ -18,6 +18,7 @@ export default function CoursePage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const limit = 5;
 
   const fetchCourses = useCallback(async () => {
@@ -103,6 +104,10 @@ export default function CoursePage() {
   async function addCourse() {
     if (!title.trim() || !content.trim()) {
       setErrorMsg("Title and content are required");
+      setTimeout(() => {
+        setErrorMsg(null);
+      }
+      , 3000);
       return;
     }
     const { data, error } = await supabase
@@ -124,6 +129,72 @@ export default function CoursePage() {
       }, 3000);
     }
   }
+
+  async function handleRegister(courseId) {
+  if (!currentUser) {
+    setErrorMsg("You must be logged in to register for a course.");
+    return;
+  }
+
+  // 1. Fetch real user name from users table
+  const { data: userData } = await supabase
+    .from("users")
+    .select("name")
+    .eq("email", currentUser.email)
+    .single();
+
+  const finalName = userData?.name || currentUser.email;
+
+  // 2. Fetch course, including registered users
+  const { data: courseData, error: fetchError } = await supabase
+    .from("courses")
+    .select("registered_users, user_id") // include creator ID
+    .eq("id", courseId)
+    .single();
+
+  if (fetchError) {
+    setErrorMsg("Unable to fetch course details.");
+    return;
+  }
+
+  const currentList = courseData.registered_users || [];
+
+  // 3. Allow registering even if the user is the course creator
+  // Do NOT block course creators from registering
+  
+  const alreadyRegistered = currentList.some(
+    (u) => u.id === currentUser.id
+  );
+
+  if (alreadyRegistered) {
+    setErrorMsg("You have already registered for this course.");
+    setTimeout(() => {
+      setErrorMsg(null);
+    }, 3000);
+    return;
+  }
+
+  // 4. Append user
+  const updatedList = [
+    ...currentList,
+    { id: currentUser.id, name: finalName }
+  ];
+
+  // 5. Update DB
+  const { error: updateError } = await supabase
+    .from("courses")
+    .update({ registered_users: updatedList })
+    .eq("id", courseId);
+
+  if (updateError) {
+    setErrorMsg("Failed to register.");
+    return;
+  }
+  setSuccessMsg("Successfully registered!");
+  setTimeout(() => {
+    setSuccessMsg(null);
+  }, 3000);
+}
 
   async function editCourseDetails(courseId) {
     if (!title.trim() || !content.trim()) {
@@ -166,6 +237,11 @@ export default function CoursePage() {
       setPage(page - 1);
     }
   }
+
+  function anyPage(page) {
+   setPage(page);
+  }
+
 
   function handleCancelEdit() {
     setEditCourseId(null);
@@ -272,6 +348,16 @@ export default function CoursePage() {
                       Delete
                     </Button>
                   </div>
+
+                  <div className="flex gap-2 mt-3">
+                    <Button
+                      onClick={() => handleRegister(course.id)}
+                      variant="primary"
+                      className="flex-1 text-sm py-2 px-3"
+                    >
+                      Register Course
+                    </Button>
+                  </div>
                 </div>
               )}
             </Card>
@@ -303,6 +389,32 @@ export default function CoursePage() {
           >
             Next
           </Button>
+          {
+            page < 1 ? (
+            <button value={1} onClick={(e) =>anyPage(e.target.value)}>1</button>
+            ) : null
+          }
+          {
+            page < 2 ? (
+            <button value={2} onClick={(e) =>anyPage(e.target.value)}>2</button>
+            ) : null
+          }
+          {
+            page < 3 ? (
+            <button value={3} onClick={(e) =>anyPage(e.target.value)}>3</button>
+            ) : null
+          }
+          {
+            page < 4 ? (
+            <button value={4} onClick={(e) =>anyPage(e.target.value)}>4</button>
+            ) : null
+          }
+          {
+            page < 5 ? (
+            <button value={5} onClick={(e) =>anyPage(e.target.value)}>5</button>
+            ) : null
+          }
+          
         </div>
       </div>
     </div>

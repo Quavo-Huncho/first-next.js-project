@@ -16,6 +16,9 @@ export default function SignUpPage() {
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [country, setCountry] = useState("");
+  const [username, setUsername] = useState("");
+  const [phone, setPhone] = useState("");
 
   const handleSignUp = async (event) => {
     event.preventDefault();
@@ -53,7 +56,7 @@ export default function SignUpPage() {
     if (currentUser) {
       const { error: insertError } = await supabase
         .from("users")
-        .insert([{ id: currentUser.id, email: currentUser.email }]);
+        .insert([{ id: currentUser.id, email: currentUser.email, country: country, username: username, phone: phone }]);
 
       if (insertError) {
         console.error("Error inserting user record:", insertError);
@@ -86,6 +89,14 @@ export default function SignUpPage() {
 
         <form onSubmit={handleSignUp} className="space-y-5">
           <Input
+            type="text"
+            name="username"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            placeholder="Username"
+            required
+          />
+          <Input
             type="email"
             name="email"
             value={email}
@@ -107,6 +118,22 @@ export default function SignUpPage() {
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
             placeholder="Confirm password"
+            required
+          />
+          <Input
+            type="number"
+            name="phone"
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+            placeholder="Phone Number"
+            required
+          />
+          <Input 
+            type="text"
+            name="country"
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            placeholder="Country"
             required
           />
 
