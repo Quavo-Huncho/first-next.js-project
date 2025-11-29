@@ -18,6 +18,7 @@ export default function PostsPage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [pageArray, setPageArray] = useState([]);
   const limit = 5;
 
   const fetchPosts = useCallback(async () => {
@@ -43,6 +44,18 @@ export default function PostsPage() {
     }
   }, []);
 
+  //Getting the number of pages
+  const getCount = async () => {
+    const { count, error } = await supabase.from("posts").select("*", {count: "exact", head: true});
+    if(error){
+      console.error("Error in getting the counts");
+    }
+    else{
+      const totalPages = Math.ceil(count/limit);
+      setPageArray(Array.from({length: totalPages}, (_, i) => i + 1));
+    }
+  }
+
   const handleDatabaseChange = useCallback((payload) => {
     // Refresh list to maintain joined user metadata
     fetchPosts();
@@ -52,6 +65,7 @@ export default function PostsPage() {
 
     fetchPosts();
     getUser();
+    getCount();
 
     // Set up real-time subscription to 'posts' table
     const channel = supabase
@@ -133,6 +147,10 @@ export default function PostsPage() {
       if (page > 1) {
         setPage(page - 1);
       }
+    }
+    
+    function anyPage(p) {
+      setPage(Number(p));
     }
   if (loading && posts.length === 0) {
     return <Loading />;
@@ -227,6 +245,7 @@ export default function PostsPage() {
           </div>
         )}
 
+        {/* Pagination */}
         <div className="flex justify-center items-center gap-4 mt-10">
           <Button onClick={previousPage} disabled={page === 1} variant="secondary">
             Previous
@@ -234,6 +253,17 @@ export default function PostsPage() {
           <span className="text-white font-semibold text-lg bg-white/10 px-6 py-2 rounded-lg">
             Page {page}
           </span>
+          {pageArray.map((p) => (
+            <button
+              key={p}
+              value={p}
+              onClick={(e) => anyPage(e.target.value)}
+              className={`px-3 py-1 rounded ${page === p ? "bg-blue-500 text-white" : "bg-white/10 text-white"}`}
+            >
+              {p}
+            </button>
+          ))}
+
           <Button onClick={nextPage} disabled={posts.length < limit} variant="secondary">
             Next
           </Button>

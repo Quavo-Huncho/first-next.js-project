@@ -18,14 +18,19 @@ export default function CoursePage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [pageArray, setPageArray] = useState([]);
   const limit = 5;
 
   const fetchCourses = useCallback(async () => {
     setLoading(true);
     const start = (page - 1) * limit;
     const end = start + limit - 1;
-    const { data, error } = await supabase.from("courses").select("*").order("created_at", {ascending:false}).range(start, end);
+    const { data, error } = await supabase
+      .from("courses")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(start, end);
+
     if (error) {
       console.error("Error fetching courses:", error);
       setErrorMsg("Failed to fetch courses");
@@ -33,11 +38,11 @@ export default function CoursePage() {
       setCourses(data);
     }
     setLoading(false);
-  }, [page, limit]);
+  }, [page]);
 
   const getUser = useCallback(async () => {
-    const { data, error } = await supabase.auth.getUser(); 
-    if(error){
+    const { data, error } = await supabase.auth.getUser();
+    if (error) {
       console.error("Error getting user:", error);
     } else {
       setCurrentUser(data.user);
@@ -47,43 +52,54 @@ export default function CoursePage() {
 
   const handleDatabaseChange = useCallback((payload) => {
     if (payload.eventType === 'INSERT') {
-      setCourses((prev) => [payload.new, ...prev])
+      setCourses((prev) => [payload.new, ...prev]);
     } else if (payload.eventType === 'UPDATE') {
       setCourses((prev) =>
         prev.map((course) =>
           course.id === payload.new.id ? payload.new : course
         )
-      )
+      );
     } else if (payload.eventType === 'DELETE') {
       setCourses((prev) =>
         prev.filter((course) => course.id !== payload.old.id)
-      )
+      );
     }
   }, []);
+
+  const getCount = async () => {
+    const { count, error } = await supabase
+      .from("courses")
+      .select("*", { count: "exact", head: true });
+
+    if (error) {
+      console.error("Error getting course count:", error);
+    } else {
+      const totalPages = Math.ceil(count / limit);
+      setPageArray(Array.from({ length: totalPages }, (_, i) => i + 1));
+    }
+  };
 
   useEffect(() => {
     fetchCourses();
     getUser();
+    getCount();
 
-    // Set up real-time subscription to 'posts' table
     const channel = supabase
-      .channel('courses-changes')
+      .channel("courses-changes")
       .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'courses' },
+        "postgres_changes",
+        { event: "*", schema: "public", table: "courses" },
         (payload) => {
-          console.log('Change received!', payload)
-          handleDatabaseChange(payload)
+          console.log("Change received!", payload);
+          handleDatabaseChange(payload);
         }
       )
-      .subscribe()
+      .subscribe();
 
-    // Cleanup subscription
     return () => {
-      supabase.removeChannel(channel)
-    }
+      supabase.removeChannel(channel);
+    };
   }, [page, fetchCourses, getUser, handleDatabaseChange]);
-
 
   async function handleDelete(courseId) {
     const { error } = await supabase.from("courses").delete().eq("id", courseId);
@@ -95,21 +111,17 @@ export default function CoursePage() {
       fetchCourses();
       setErrorMsg(null);
       setCourses((prev) => prev.filter((c) => c.id !== courseId));
-      setTimeout(() => {
-        setSuccessMsg(null);
-      }, 3000);
+      setTimeout(() => setSuccessMsg(null), 3000);
     }
   }
 
   async function addCourse() {
     if (!title.trim() || !content.trim()) {
       setErrorMsg("Title and content are required");
-      setTimeout(() => {
-        setErrorMsg(null);
-      }
-      , 3000);
+      setTimeout(() => setErrorMsg(null), 3000);
       return;
     }
+
     const { data, error } = await supabase
       .from("courses")
       .insert([{ title, content, user_id: currentUser ? currentUser.id : null }])
@@ -124,86 +136,69 @@ export default function CoursePage() {
       setErrorMsg(null);
       setTitle("");
       setContent("");
-      setTimeout(() => {
-        setSuccessMsg(null);
-      }, 3000);
+      setTimeout(() => setSuccessMsg(null), 3000);
     }
   }
 
   async function handleRegister(courseId) {
-  if (!currentUser) {
-    setErrorMsg("You must be logged in to register for a course.");
-    return;
+    if (!currentUser) {
+      setErrorMsg("You must be logged in to register for a course.");
+      return;
+    }
+
+    const { data: userData } = await supabase
+      .from("users")
+      .select("name")
+      .eq("email", currentUser.email)
+      .single();
+
+    const finalName = userData?.name || currentUser.email;
+
+    const { data: courseData, error: fetchError } = await supabase
+      .from("courses")
+      .select("registered_users, user_id")
+      .eq("id", courseId)
+      .single();
+
+    if (fetchError) {
+      setErrorMsg("Unable to fetch course details.");
+      return;
+    }
+
+    const currentList = courseData.registered_users || [];
+    const alreadyRegistered = currentList.some((u) => u.id === currentUser.id);
+
+    if (alreadyRegistered) {
+      setErrorMsg("You have already registered for this course.");
+      setTimeout(() => setErrorMsg(null), 3000);
+      return;
+    }
+
+    const updatedList = [...currentList, { id: currentUser.id, name: finalName }];
+
+    const { error: updateError } = await supabase
+      .from("courses")
+      .update({ registered_users: updatedList })
+      .eq("id", courseId);
+
+    if (updateError) {
+      setErrorMsg("Failed to register.");
+      return;
+    }
+
+    setSuccessMsg("Successfully registered!");
+    setTimeout(() => setSuccessMsg(null), 3000);
   }
-
-  // 1. Fetch real user name from users table
-  const { data: userData } = await supabase
-    .from("users")
-    .select("name")
-    .eq("email", currentUser.email)
-    .single();
-
-  const finalName = userData?.name || currentUser.email;
-
-  // 2. Fetch course, including registered users
-  const { data: courseData, error: fetchError } = await supabase
-    .from("courses")
-    .select("registered_users, user_id") // include creator ID
-    .eq("id", courseId)
-    .single();
-
-  if (fetchError) {
-    setErrorMsg("Unable to fetch course details.");
-    return;
-  }
-
-  const currentList = courseData.registered_users || [];
-
-  // 3. Allow registering even if the user is the course creator
-  // Do NOT block course creators from registering
-  
-  const alreadyRegistered = currentList.some(
-    (u) => u.id === currentUser.id
-  );
-
-  if (alreadyRegistered) {
-    setErrorMsg("You have already registered for this course.");
-    setTimeout(() => {
-      setErrorMsg(null);
-    }, 3000);
-    return;
-  }
-
-  // 4. Append user
-  const updatedList = [
-    ...currentList,
-    { id: currentUser.id, name: finalName }
-  ];
-
-  // 5. Update DB
-  const { error: updateError } = await supabase
-    .from("courses")
-    .update({ registered_users: updatedList })
-    .eq("id", courseId);
-
-  if (updateError) {
-    setErrorMsg("Failed to register.");
-    return;
-  }
-  setSuccessMsg("Successfully registered!");
-  setTimeout(() => {
-    setSuccessMsg(null);
-  }, 3000);
-}
 
   async function editCourseDetails(courseId) {
     if (!title.trim() || !content.trim()) {
       setErrorMsg("Title and content are required");
       return;
     }
+
     const { error } = await supabase
       .from("courses")
-      .update({ title: title, content: content })
+      .update({ title, content })
       .eq("id", courseId);
 
     if (error) {
@@ -215,33 +210,26 @@ export default function CoursePage() {
       setEditCourseId(null);
       setTitle("");
       setContent("");
-      setCourses((prevCourses) =>
-        prevCourses.map((course) =>
-          course.id === courseId
-            ? { ...course, title: title, content: content }
-            : course
+      setCourses((prev) =>
+        prev.map((course) =>
+          course.id === courseId ? { ...course, title, content } : course
         )
       );
-      setTimeout(() => {
-        setSuccessMsg(null);
-      }, 3000);
+      setTimeout(() => setSuccessMsg(null), 3000);
     }
   }
 
   function nextPage() {
-    setPage(page + 1);
+    setPage((prev) => prev + 1);
   }
-  
+
   function previousPage() {
-    if (page > 1) {
-      setPage(page - 1);
-    }
+    if (page > 1) setPage((prev) => prev - 1);
   }
 
-  function anyPage(page) {
-   setPage(page);
+  function anyPage(p) {
+    setPage(Number(p));
   }
-
 
   function handleCancelEdit() {
     setEditCourseId(null);
@@ -371,50 +359,24 @@ export default function CoursePage() {
         )}
 
         {/* Pagination */}
-        <div className="flex justify-center items-center gap-4 mt-8">
-          <Button
-            onClick={previousPage}
-            disabled={page === 1}
-            variant="secondary"
-          >
-            Previous
-          </Button>
+        <div className="flex justify-center items-center gap-2 mt-4">
+          <Button onClick={previousPage} disabled={page === 1} variant="secondary">Previous</Button>
           <span className="text-white font-semibold text-lg bg-white/10 px-6 py-2 rounded-lg">
             Page {page}
           </span>
-          <Button
-            onClick={nextPage}
-            disabled={courses.length < limit}
-            variant="secondary"
-          >
-            Next
-          </Button>
-          {
-            page < 1 ? (
-            <button value={1} onClick={(e) =>anyPage(e.target.value)}>1</button>
-            ) : null
-          }
-          {
-            page < 2 ? (
-            <button value={2} onClick={(e) =>anyPage(e.target.value)}>2</button>
-            ) : null
-          }
-          {
-            page < 3 ? (
-            <button value={3} onClick={(e) =>anyPage(e.target.value)}>3</button>
-            ) : null
-          }
-          {
-            page < 4 ? (
-            <button value={4} onClick={(e) =>anyPage(e.target.value)}>4</button>
-            ) : null
-          }
-          {
-            page < 5 ? (
-            <button value={5} onClick={(e) =>anyPage(e.target.value)}>5</button>
-            ) : null
-          }
           
+          {pageArray.map((p) => (
+            <button
+              key={p}
+              value={p}
+              onClick={(e) => anyPage(e.target.value)}
+              className={`px-3 py-1 rounded ${page === p ? "bg-blue-500 text-white" : "bg-white/10 text-white"}`}
+            >
+              {p}
+            </button>
+          ))}
+
+          <Button onClick={nextPage} disabled={page === pageArray.length} variant="secondary">Next</Button>
         </div>
       </div>
     </div>
