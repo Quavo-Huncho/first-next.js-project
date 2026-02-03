@@ -3,7 +3,7 @@ import {useState, useEffect} from "react"
 import {supabase} from "@/lib/supabase"
 
 
-export default function contact(){
+export default function Contact(){
   const [contacts, setContacts] = useState([])
   const [user, setUser] = useState([])
   
